@@ -71,18 +71,18 @@ function updateFlowPrompt() {
   const distanceValue = distanceInput.value.trim();
   const eyeHeightValue = eyeHeightInput.value.trim();
   if (!distanceValue || !eyeHeightValue) {
-    flowTextEl.textContent = "Step 3: Enter distance from tree base and eye height (m).";
+    flowTextEl.textContent = "Step 3: Enter distance from tree base and camera height (m).";
     return;
   }
 
   const distance = Number(distanceValue);
   const eyeHeight = Number(eyeHeightValue);
   if (!Number.isFinite(distance) || distance <= 0 || !Number.isFinite(eyeHeight) || eyeHeight < 0) {
-    flowTextEl.textContent = "Step 3: Enter distance from tree base and eye height (m).";
+    flowTextEl.textContent = "Step 3: Enter distance from tree base and camera height (m).";
     return;
   }
 
-  flowTextEl.textContent = "Step 4: Align crosshair with treetop, then tap capture.";
+  flowTextEl.textContent = "Step 4: Align crosshair with treetop, then tap capture button.";
 }
 
 function updateButtonStates() {
