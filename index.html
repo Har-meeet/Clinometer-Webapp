@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tree Height Meter</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="camera-wrap card">
+        <video id="camera" autoplay playsinline muted></video>
+        <div class="overlay">
+          <div id="angleHud" class="angle-hud hidden">Angle: —</div>
+          <svg class="crosshair" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+            <line x1="30" y1="0" x2="30" y2="22" stroke="currentColor" stroke-width="2"/>
+            <line x1="30" y1="38" x2="30" y2="60" stroke="currentColor" stroke-width="2"/>
+            <line x1="0" y1="30" x2="22" y2="30" stroke="currentColor" stroke-width="2"/>
+            <line x1="38" y1="30" x2="60" y2="30" stroke="currentColor" stroke-width="2"/>
+            <circle cx="30" cy="30" r="6" fill="none" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          <div class="cam-actions hidden" id="camActions">
+            <button id="measureBtn" class="btn-shutter" aria-label="Measure height"></button>
+          </div>
+        </div>
+      </section>
+
+      <section class="controls card">
+        <p id="flowText" class="flow-text">Step 1: Enable camera &amp; sensors.</p>
+        <p id="result" class="result hidden"></p>
+
+        <button id="startBtn" class="btn">Enable Camera &amp; Sensors</button>
+        <button id="calibrateBtn" class="btn hidden">Set 0° (Hold Level)</button>
+
+        <div id="inputFields" class="grid locked">
+          <label>
+            Distance from tree base (m)
+            <input id="distanceInput" type="number" step="0.1" min="0" placeholder="e.g. 12.5" disabled />
+          </label>
+
+          <label>
+            Camera/eye height (m)
+            <input id="eyeHeightInput" type="number" step="0.01" min="0" placeholder="e.g. 1.6" disabled />
+          </label>
+
+          <label>
+            Angle to tree top (° from horizontal)
+            <div id="angleInput" class="value-display">—</div>
+          </label>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
