@@ -64,7 +64,7 @@ function updateFlowPrompt() {
   }
 
   if (!calibrated) {
-    flowTextEl.textContent = 'Step 2: Lay phone horizontal, then tap "Set 0°" to calibrate.';
+    flowTextEl.textContent = 'Step 2: Lay phone flat, then tap "Set 0°" to calibrate.';
     return;
   }
 
