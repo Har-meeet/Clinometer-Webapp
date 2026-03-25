@@ -201,7 +201,7 @@ function measureHeight() {
   }
 
   if (!Number.isFinite(eyeHeight) || eyeHeight < 0) {
-    setResult("Enter a valid camera/eye height.");
+    setResult("Enter a valid camera height.");
     return;
   }
 
