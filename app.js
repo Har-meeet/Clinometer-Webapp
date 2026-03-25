@@ -1,5 +1,4 @@
 const startBtn = document.getElementById("startBtn");
-const calibrateBtn = document.getElementById("calibrateBtn");
 const measureBtn = document.getElementById("measureBtn");
 const cameraEl = document.getElementById("camera");
 const camActions = document.getElementById("camActions");
@@ -11,13 +10,8 @@ const resultEl = document.getElementById("result");
 const flowTextEl = document.getElementById("flowText");
 const inputFields = document.getElementById("inputFields");
 
-
-
-let latestRawBetaDeg = null;
-let baselineBetaDeg = null;
 let latestAngleDeg = null;
 let sensorsEnabled = false;
-let calibrated = false;
 let hasCapturedOnce = false;
 
 function setResult(message) {
@@ -44,16 +38,15 @@ function inputsAreValid() {
 }
 
 function updateVisibility() {
-  // Step 1: show only enable button
   startBtn.classList.toggle("hidden", sensorsEnabled);
-  // Step 2: show calibrate only after sensors on
-  calibrateBtn.classList.toggle("hidden", !sensorsEnabled || calibrated);
-  // Steps 1-2: keep inputs visible but clearly locked until calibrated
-  inputFields.classList.toggle("locked", !calibrated);
-  distanceInput.disabled = !calibrated;
-  eyeHeightInput.disabled = !calibrated;
-  // Step 4: show capture button after inputs valid
-  const readyToCapture = calibrated && inputsAreValid();
+  
+  // Inputs are active as soon as sensors are on
+  inputFields.classList.toggle("locked", !sensorsEnabled);
+  distanceInput.disabled = !sensorsEnabled;
+  eyeHeightInput.disabled = !sensorsEnabled;
+  
+  // Show capture button after sensors are on and inputs are valid
+  const readyToCapture = sensorsEnabled && inputsAreValid();
   camActions.classList.toggle("hidden", !readyToCapture);
 }
 
@@ -63,33 +56,27 @@ function updateFlowPrompt() {
     return;
   }
 
-  if (!calibrated) {
-    flowTextEl.textContent = 'Step 2: Lay phone flat, then tap "Set 0°" to calibrate.';
-    return;
-  }
-
   const distanceValue = distanceInput.value.trim();
   const eyeHeightValue = eyeHeightInput.value.trim();
   if (!distanceValue || !eyeHeightValue) {
-    flowTextEl.textContent = "Step 3: Enter distance from tree base and camera height (m).";
+    flowTextEl.textContent = "Step 2: Enter distance from tree base and camera height (m).";
     return;
   }
 
   const distance = Number(distanceValue);
   const eyeHeight = Number(eyeHeightValue);
   if (!Number.isFinite(distance) || distance <= 0 || !Number.isFinite(eyeHeight) || eyeHeight < 0) {
-    flowTextEl.textContent = "Step 3: Enter distance from tree base and camera height (m).";
+    flowTextEl.textContent = "Step 2: Enter distance from tree base and camera height (m).";
     return;
   }
 
-  flowTextEl.textContent = "Step 4: Align crosshair with treetop, then tap capture button.";
+  flowTextEl.textContent = "Step 3: Align crosshair with treetop, then tap capture button.";
 }
 
 function updateButtonStates() {
-  calibrateBtn.disabled = !sensorsEnabled;
   const angle = getTreeAngle();
   measureBtn.disabled =
-    !sensorsEnabled || !calibrated || !inputsAreValid() || !Number.isFinite(angle) || angle <= 0;
+    !sensorsEnabled || !inputsAreValid() || !Number.isFinite(angle) || angle <= 0;
   updateVisibility();
 }
 
@@ -104,8 +91,8 @@ updateFlowPrompt();
 
 function clampAngle(deg) {
   if (!Number.isFinite(deg)) return null;
-  if (deg > 180) return 180;
-  if (deg < -180) return -180;
+  // if (deg > 180) return 180;
+  // if (deg < -180) return -180;
   return deg;
 }
 
@@ -140,15 +127,12 @@ async function requestOrientationPermissionIfNeeded() {
 }
 
 function onOrientation(event) {
-  // beta: front/back tilt in degrees where 0 means upright in portrait.
   const beta = event.beta;
   if (!Number.isFinite(beta)) return;
 
-  latestRawBetaDeg = beta;
-  if (baselineBetaDeg === null) baselineBetaDeg = beta;
-
-  // Elevation angle relative to user-defined horizontal baseline.
-  const elevation = beta - baselineBetaDeg;
+  // Automatically sets horizontal based on gravity. 
+  // beta=90 is perfectly upright (portrait).
+  const elevation = beta;
   updateAngleDisplay(elevation);
   updateButtonStates();
 }
@@ -185,15 +169,12 @@ function measureHeight() {
   const eyeHeightValueBefore = eyeHeightInput.value;
   const distance = Number(distanceInput.value);
   const eyeHeight = Number(eyeHeightInput.value);
-  const rawAngle = getTreeAngle();
+  const elevationAngle = getTreeAngle() - 90;
 
-  if (!Number.isFinite(rawAngle)) {
+  if (!Number.isFinite(elevationAngle)) {
     setResult("No angle yet. Tap enable and aim at tree top.");
     return;
   }
-
-  const angle = rawAngle - 90;
-
 
   if (!Number.isFinite(distance) || distance <= 0) {
     setResult("Enter a valid distance from the tree base.");
@@ -205,28 +186,13 @@ function measureHeight() {
     return;
   }
 
-  const height = distance * Math.tan((angle * Math.PI) / 180) + eyeHeight;
+  // Trigonometric calculation: Height = (Distance * tan(θ)) + EyeHeight
+  const height = distance * Math.tan((elevationAngle * Math.PI) / 180) + eyeHeight;
 
-  setResult(`Estimated height: ${height.toFixed(2)} m (angle: ${rawAngle.toFixed(2)}°)`);
+  setResult(`Estimated height: ${height.toFixed(2)} m (elevation: ${elevationAngle.toFixed(2)}°)`);
 
-  // Keep entered values intact and stay in capture-ready step.
   distanceInput.value = distanceValueBefore;
   eyeHeightInput.value = eyeHeightValueBefore;
-  flowTextEl.textContent = "Step 4: Align crosshair with treetop, then tap capture.";
-}
-
-function calibrateHorizontal() {
-  if (!Number.isFinite(latestRawBetaDeg)) {
-    setResult("No sensor reading yet. Enable sensors first.");
-    return;
-  }
-
-  baselineBetaDeg = latestRawBetaDeg;
-  calibrated = true;
-  updateAngleDisplay(0);
-  setResult("Horizontal set to 0°.");
-  updateButtonStates();
-  updateFlowPrompt();
 }
 
 distanceInput.addEventListener("input", () => {
@@ -240,5 +206,4 @@ eyeHeightInput.addEventListener("input", () => {
 });
 
 startBtn.addEventListener("click", startCameraAndSensors);
-calibrateBtn.addEventListener("click", calibrateHorizontal);
 measureBtn.addEventListener("click", measureHeight);
